@@ -1,4 +1,4 @@
-/* RESET & BASE */
+
 * {
     margin: 0;
     padding: 0;
@@ -20,7 +20,7 @@ body {
     background: #ffffff;
 }
 
-/* HEADER */
+
 .header {
     display: flex;
     justify-content: space-between;
@@ -51,7 +51,6 @@ body {
     transform: translateY(-2px);
 }
 
-/* SECTION STYLES */
 .section {
     background: #f8fafc;
     padding: 25px;
@@ -60,7 +59,7 @@ body {
     border: 1px solid #e2e8f0;
 }
 
-/* CLASS INFO */
+
 .class-info {
     background: rgba(13, 33, 61, 0.85);
     color: white;
@@ -74,7 +73,7 @@ body {
     margin-bottom: 5px;
 }
 
-/* TABLE STYLES */
+
 .exams-table {
     width: 100%;
     border-collapse: collapse;
@@ -104,7 +103,7 @@ body {
     background: #f7fafc;
 }
 
-/* STATUS BADGES */
+
 .status-badge {
     padding: 6px 12px;
     border-radius: 20px;
@@ -125,7 +124,7 @@ body {
     color: #1e40af;
 }
 
-/* ACTION BUTTONS */
+
 .action-btn {
     padding: 8px 16px;
     border-radius: 6px;
@@ -155,7 +154,7 @@ body {
     background: #4b5563;
 }
 
-/* NO EXAMS */
+
 .no-exams {
     text-align: center;
     padding: 40px;
