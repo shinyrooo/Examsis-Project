@@ -19,7 +19,7 @@ $stmt->execute();
 $exam_result = $stmt->get_result();
 
 if ($exam_result->num_rows == 0) {
-    echo "Exam not found or not available for your class.";
+    echo "Ujian tidak ditemukan.";
     exit();
 }
 
@@ -33,7 +33,7 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
-    echo "You have already completed this exam. <a href='results.php'>View Results</a>";
+    echo "Kamu sudah menyelesaikan ujian ini. <a href='results.php'>View Results</a>";
     exit();
 }
 $stmt->close();
@@ -47,7 +47,7 @@ $total_questions = count($questions);
 $stmt->close();
 
 if ($total_questions == 0) {
-    echo "No questions available for this exam.";
+    echo "Pertanyaan belum tersedia untuk ujian ini.";
     exit();
 }
 
@@ -89,8 +89,8 @@ if ($time_left <= 0) {
     unset($_SESSION['exam_id']);
     unset($_SESSION['user_answers']);
     
-    echo "<h2>Time's Up! Exam Submitted</h2>";
-    echo "<p>Your score: $score/$total_questions</p>";
+    echo "<h2>Waktu sudah habis!</h2>";
+    echo "<p>Nilai kamu: $score/$total_questions</p>";
     echo "<a href='results.php'>View Results</a>";
     exit();
 }
@@ -146,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         echo "<h2>Exam Submitted</h2>";
         echo "<p>Your score: $score/$total_questions</p>";
-        echo "<a href='results.php'>View Results</a>";
+        echo "<a href='results.php'>Lihat hasil</a>";
         exit();
     }
 }
@@ -267,13 +267,13 @@ $user_answer = $_SESSION['user_answers'][$current_question];
                 
                 <div class="nav-buttons">
                     <?php if ($current_question > 1): ?>
-                        <button type="submit" name="prev" class="nav-btn">PREVIOUS</button>
+                        <button type="submit" name="prev" class="nav-btn">Sebelumnya</button>
                     <?php endif; ?>
                     
                     <?php if ($current_question < $total_questions): ?>
-                        <button type="submit" name="next" class="nav-btn">NEXT</button>
+                        <button type="submit" name="next" class="nav-btn">Selanjutnya</button>
                     <?php else: ?>
-                        <button type="submit" name="submit_exam" class="nav-btn">SUBMIT EXAM</button>
+                        <button type="submit" name="submit_exam" class="nav-btn">Kirimkan</button>
                     <?php endif; ?>
                 </div>
             </form>
