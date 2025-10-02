@@ -101,53 +101,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['answer'])) {
         $_SESSION['user_answers'][$current_question] = $_POST['answer'];
     }
-    
-    if (isset($_POST['next']) && $current_question < $total_questions) {
-        $current_question++;
-        header("Location: take_exam.php?exam_id=$exam_id&q=$current_question");
-        exit();
-    } elseif (isset($_POST['prev']) && $current_question > 1) {
-        $current_question--;
-        header("Location: take_exam.php?exam_id=$exam_id&q=$current_question");
-        exit();
-    } elseif (isset($_POST['goto_question'])) {
-        $goto_question = intval($_POST['goto_question']);
-        if ($goto_question >= 1 && $goto_question <= $total_questions) {
-            header("Location: take_exam.php?exam_id=$exam_id&q=$goto_question");
-            exit();
-        }
-    } elseif (isset($_POST['submit_exam'])) {
+
+    // Prioritas utama submit
+    if (isset($_POST['submit_exam'])) {
         $score = 0;
-        
+
         foreach ($questions as $index => $question) {
             $question_num = $index + 1;
             $user_answer = $_SESSION['user_answers'][$question_num];
-            
+
             if (!empty($user_answer)) {
                 $is_correct = ($user_answer == $question['correct_answer']);
                 if ($is_correct) $score++;
-                
-                $stmt = $conn->prepare("INSERT INTO user_answers (user_id, exam_id, question_id, user_answer, is_correct) VALUES (?, ?, ?, ?, ?)");
+
+                $stmt = $conn->prepare("INSERT INTO user_answers (user_id, exam_id, question_id, user_answer, is_correct) 
+                                        VALUES (?, ?, ?, ?, ?)");
                 $stmt->bind_param("iiisi", $_SESSION['user_id'], $exam_id, $question['id'], $user_answer, $is_correct);
                 $stmt->execute();
                 $stmt->close();
             }
         }
-        
-        $stmt = $conn->prepare("INSERT INTO exam_results (user_id, exam_id, score, total_questions) VALUES (?, ?, ?, ?)");
+
+        $stmt = $conn->prepare("INSERT INTO exam_results (user_id, exam_id, score, total_questions) 
+                                VALUES (?, ?, ?, ?)");
         $stmt->bind_param("iiii", $_SESSION['user_id'], $exam_id, $score, $total_questions);
         $stmt->execute();
         $stmt->close();
-        
+
         unset($_SESSION['exam_start_time']);
         unset($_SESSION['exam_duration']);
         unset($_SESSION['exam_id']);
         unset($_SESSION['user_answers']);
-        
-        echo "<h2>Exam Submitted</h2>";
-        echo "<p>Your score: $score/$total_questions</p>";
-        echo "<a href='results.php'>Lihat hasil</a>";
+
+        header("Location: results.php");
         exit();
+
+    } elseif (isset($_POST['next']) && $current_question < $total_questions) {
+        $current_question++;
+        header("Location: take_exam.php?exam_id=$exam_id&q=$current_question");
+        exit();
+
+    } elseif (isset($_POST['prev']) && $current_question > 1) {
+        $current_question--;
+        header("Location: take_exam.php?exam_id=$exam_id&q=$current_question");
+        exit();
+
+    } elseif (!empty($_POST['goto_question'])) { // penting: pakai !empty
+        $goto_question = intval($_POST['goto_question']);
+        if ($goto_question >= 1 && $goto_question <= $total_questions) {
+            header("Location: take_exam.php?exam_id=$exam_id&q=$goto_question");
+            exit();
+        }
     }
 }
 
@@ -163,7 +167,7 @@ $user_answer = $_SESSION['user_answers'][$current_question];
 <html>
 <head>
     <title>Take Exam - <?php echo $exam['exam_name']; ?></title>
-     <link rel="stylesheet" href="css/take_exam.css">
+    <link rel="stylesheet" href="css/take_exam.css">
     <script>
         var timeLeft = <?php echo $time_left; ?>;
         
@@ -204,6 +208,15 @@ $user_answer = $_SESSION['user_answers'][$current_question];
             document.getElementById('examForm').submit();
         }
         
+        function confirmSubmit() {
+            var unanswered = 0;
+            for (var i = 1; i <= <?php echo $total_questions; ?>; i++) {
+               
+            }
+            
+            return confirm('Yakin ingin mengirimkan ujian? Setelah dikirim, Anda tidak dapat mengubah jawaban.');
+        }
+        
         window.onload = function() {
             startTimer();
             var currentAnswer = '<?php echo $user_answer; ?>';
@@ -240,11 +253,12 @@ $user_answer = $_SESSION['user_answers'][$current_question];
                 <input type="hidden" name="question_num" value="<?php echo $current_question; ?>">
                 <input type="hidden" name="goto_question" id="goto_question" value="">
                 
-                <input type="radio" name="answer" value="A" <?php echo ($user_answer == 'A') ? 'checked' : ''; ?>>
-                <input type="radio" name="answer" value="B" <?php echo ($user_answer == 'B') ? 'checked' : ''; ?>>
-                <input type="radio" name="answer" value="C" <?php echo ($user_answer == 'C') ? 'checked' : ''; ?>>
-                <input type="radio" name="answer" value="D" <?php echo ($user_answer == 'D') ? 'checked' : ''; ?>>
-                
+                <input type="radio" name="answer" value="A" <?php echo ($user_answer == 'A') ? 'checked' : ''; ?> style="display: none;">
+                <input type="radio" name="answer" value="B" <?php echo ($user_answer == 'B') ? 'checked' : ''; ?> style="display: none;">
+                <input type="radio" name="answer" value="C" <?php echo ($user_answer == 'C') ? 'checked' : ''; ?> style="display: none;">
+                <input type="radio" name="answer" value="D" <?php echo ($user_answer == 'D') ? 'checked' : ''; ?> style="display: none;">
+                <input type="radio" name="answer" value="E" <?php echo ($user_answer == 'E') ? 'checked' : ''; ?> style="display: none;">
+
                 <div class="option-item <?php echo ($user_answer == 'A') ? 'selected' : ''; ?>" data-value="A" onclick="selectOption('A')">
                     <div class="option-circle">A</div>
                     <div class="option-text"><?php echo $current_question_data['option_a']; ?></div>
@@ -264,6 +278,10 @@ $user_answer = $_SESSION['user_answers'][$current_question];
                     <div class="option-circle">D</div>
                     <div class="option-text"><?php echo $current_question_data['option_d']; ?></div>
                 </div>
+                 <div class="option-item <?php echo ($user_answer == 'E') ? 'selected' : ''; ?>" data-value="E" onclick="selectOption('E')">
+                    <div class="option-circle">E</div>
+                    <div class="option-text"><?php echo $current_question_data['option_e']; ?></div>
+                </div>
                 
                 <div class="nav-buttons">
                     <?php if ($current_question > 1): ?>
@@ -273,7 +291,7 @@ $user_answer = $_SESSION['user_answers'][$current_question];
                     <?php if ($current_question < $total_questions): ?>
                         <button type="submit" name="next" class="nav-btn">Selanjutnya</button>
                     <?php else: ?>
-                        <button type="submit" name="submit_exam" class="nav-btn">Kirimkan</button>
+                        <button type="submit" name="submit_exam" class="nav-btn submit-btn" onclick="return confirmSubmit()">Kirimkan</button>
                     <?php endif; ?>
                 </div>
             </form>

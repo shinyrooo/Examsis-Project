@@ -20,7 +20,7 @@ $stmt->execute();
 $details = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
-$stmt = $conn->prepare("SELECT q.question_text, q.option_a, q.option_b, q.option_c, q.option_d, 
+$stmt = $conn->prepare("SELECT q.question_text, q.option_a, q.option_b, q.option_c, q.option_d, q.option_e, 
                        q.correct_answer, ua.user_answer, ua.is_correct 
                        FROM user_answers ua 
                        JOIN questions q ON ua.question_id = q.id 
@@ -86,6 +86,7 @@ $stmt->close();
                                 <li><strong>B:</strong> <?php echo htmlspecialchars($answer['option_b']); ?></li>
                                 <li><strong>C:</strong> <?php echo htmlspecialchars($answer['option_c']); ?></li>
                                 <li><strong>D:</strong> <?php echo htmlspecialchars($answer['option_d']); ?></li>
+                                <li><strong>E:</strong> <?php echo htmlspecialchars($answer['option_e']); ?></li>
                             </ul>
                         </td>
                         <td>

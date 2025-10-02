@@ -88,6 +88,7 @@
 
         .form-group {
             margin-bottom: 20px;
+
         }
         
         .form-group label {
@@ -155,7 +156,7 @@
             background: #b91c1c;
         }
         
-        /* TABLE STYLES */
+      
         .users-table {
             width: 100%;
             border-collapse: collapse;
@@ -185,7 +186,7 @@
             background: #f7fafc;
         }
         
-        /* ACTION BUTTONS */
+     
         .action-buttons {
             display: flex;
             gap: 8px;

@@ -32,24 +32,25 @@ if (isset($_POST['import_csv'])) {
         $firstRow = fgetcsv($handle, 1000, ",");
         if ($firstRow && stripos(implode(",", $firstRow), "question") !== false) {} else { rewind($handle); }
         while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
-            if (count($data) < 6) {
+            if (count($data) < 7) {
                 $data = str_getcsv(implode(",", $data), ";");
             }
-            if (count($data) >= 6) {
+            if (count($data) >= 7) { 
                 $question_text  = trim($data[0]);
                 $option_a       = trim($data[1]);
                 $option_b       = trim($data[2]);
                 $option_c       = trim($data[3]);
                 $option_d       = trim($data[4]);
-                $correct_answer = strtoupper(trim($data[5]));
-                if (!in_array($correct_answer, ['A', 'B', 'C', 'D'])) {
+                $option_e       = trim($data[5]); 
+                $correct_answer = strtoupper(trim($data[6])); 
+                if (!in_array($correct_answer, ['A', 'B', 'C', 'D', 'E'])) {
                     $skipped++;
                     continue;
                 }
                 $stmt = $conn->prepare("INSERT INTO questions 
-                    (exam_id, number, question_text, option_a, option_b, option_c, option_d, correct_answer) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                $stmt->bind_param("iissssss", 
+                    (exam_id, number, question_text, option_a, option_b, option_c, option_d, option_e, correct_answer) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"); 
+                $stmt->bind_param("iisssssss", 
                     $exam_id, 
                     $current_number, 
                     $question_text, 
@@ -57,6 +58,7 @@ if (isset($_POST['import_csv'])) {
                     $option_b, 
                     $option_c, 
                     $option_d, 
+                    $option_e, 
                     $correct_answer
                 );
                 if ($stmt->execute()) {
@@ -89,9 +91,10 @@ if (isset($_POST['add_question'])) {
     $option_b = sanitize_input($_POST['option_b']);
     $option_c = sanitize_input($_POST['option_c']);
     $option_d = sanitize_input($_POST['option_d']);
+    $option_e = sanitize_input($_POST['option_e']);
     $correct_answer = sanitize_input($_POST['correct_answer']);
-    $stmt = $conn->prepare("INSERT INTO questions (exam_id, number, question_text, option_a, option_b, option_c, option_d, correct_answer) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("iissssss", $exam_id, $next_number, $question_text, $option_a, $option_b, $option_c, $option_d, $correct_answer);
+    $stmt = $conn->prepare("INSERT INTO questions (exam_id, number, question_text, option_a, option_b, option_c, option_d, option_e, correct_answer) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("iisssssss", $exam_id, $next_number, $question_text, $option_a, $option_b, $option_c, $option_d, $option_e, $correct_answer);
     $stmt->execute();
     $stmt->close();
     header("Location: manage_questions.php?exam_id=" . $exam_id);
@@ -105,9 +108,10 @@ if (isset($_POST['edit_question'])) {
     $option_b = sanitize_input($_POST['option_b']);
     $option_c = sanitize_input($_POST['option_c']);
     $option_d = sanitize_input($_POST['option_d']);
+    $option_e = sanitize_input($_POST['option_e']);
     $correct_answer = sanitize_input($_POST['correct_answer']);
-    $stmt = $conn->prepare("UPDATE questions SET question_text = ?, option_a = ?, option_b = ?, option_c = ?, option_d = ?, correct_answer = ? WHERE id = ?");
-    $stmt->bind_param("ssssssi", $question_text, $option_a, $option_b, $option_c, $option_d, $correct_answer, $question_id);
+    $stmt = $conn->prepare("UPDATE questions SET question_text = ?, option_a = ?, option_b = ?, option_c = ?, option_d = ?, option_e = ?, correct_answer = ? WHERE id = ?");
+    $stmt->bind_param("sssssssi", $question_text, $option_a, $option_b, $option_c, $option_d, $option_e, $correct_answer, $question_id);
     $stmt->execute();
     $stmt->close();
     header("Location: manage_questions.php?exam_id=" . $exam_id);
@@ -246,12 +250,17 @@ $stmt->close();
                     <input type="text" id="option_d" name="option_d" required>
                 </div>
                 <div class="form-group">
+                    <label for="option_e">Pilihan E:</label> 
+                    <input type="text" id="option_e" name="option_e" required>
+                </div>
+                <div class="form-group">
                     <label for="correct_answer">Jawaban yang benar:</label>
                     <select id="correct_answer" name="correct_answer" required>
                         <option value="A">A</option>
                         <option value="B">B</option>
                         <option value="C">C</option>
                         <option value="D">D</option>
+                        <option value="E">E</option>
                     </select>
                 </div>
                 <button type="submit" id="submitBtn" name="add_question" class="btn btn-primary">Tambahkan Soal</button>
@@ -282,12 +291,13 @@ $stmt->close();
                                     <li><strong>B:</strong> <?php echo htmlspecialchars($question['option_b']); ?></li>
                                     <li><strong>C:</strong> <?php echo htmlspecialchars($question['option_c']); ?></li>
                                     <li><strong>D:</strong> <?php echo htmlspecialchars($question['option_d']); ?></li>
+                                    <li><strong>E:</strong> <?php echo htmlspecialchars($question['option_e']); ?></li>
                                 </ul>
                             </td>
                             <td><span class="correct-answer"><?php echo $question['correct_answer']; ?></span></td>
                             <td>
                                 <div class="action-buttons">
-                                    <button onclick="showEditForm(<?php echo $question['id']; ?>, '<?php echo addslashes($question['question_text']); ?>', '<?php echo addslashes($question['option_a']); ?>', '<?php echo addslashes($question['option_b']); ?>', '<?php echo addslashes($question['option_c']); ?>', '<?php echo addslashes($question['option_d']); ?>', '<?php echo $question['correct_answer']; ?>')" 
+                                    <button onclick="showEditForm(<?php echo $question['id']; ?>, '<?php echo addslashes($question['question_text']); ?>', '<?php echo addslashes($question['option_a']); ?>', '<?php echo addslashes($question['option_b']); ?>', '<?php echo addslashes($question['option_c']); ?>', '<?php echo addslashes($question['option_d']); ?>', '<?php echo addslashes($question['option_e']); ?>', '<?php echo $question['correct_answer']; ?>')" 
                                             class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;">
                                         Edit
                                     </button>
@@ -308,13 +318,14 @@ $stmt->close();
         </div>
     </div>
     <script>
-    function showEditForm(questionId, questionText, optionA, optionB, optionC, optionD, correctAnswer) {
+    function showEditForm(questionId, questionText, optionA, optionB, optionC, optionD, optionE, correctAnswer) { 
         document.getElementById('question_id').value = questionId;
         document.getElementById('question_text').value = questionText;
         document.getElementById('option_a').value = optionA;
         document.getElementById('option_b').value = optionB;
         document.getElementById('option_c').value = optionC;
         document.getElementById('option_d').value = optionD;
+        document.getElementById('option_e').value = optionE; 
         document.getElementById('correct_answer').value = correctAnswer;
         document.getElementById('formTitle').innerText = "Edit Soal";
         document.getElementById('submitBtn').innerText = "Perbarui";
@@ -329,6 +340,7 @@ $stmt->close();
         document.getElementById('option_b').value = "";
         document.getElementById('option_c').value = "";
         document.getElementById('option_d').value = "";
+        document.getElementById('option_e').value = ""; 
         document.getElementById('correct_answer').value = "A";
         document.getElementById('formTitle').innerText = "Tambah soal baru";
         document.getElementById('submitBtn').innerText = "Tambahkan Soal";

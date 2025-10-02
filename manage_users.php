@@ -56,6 +56,105 @@ if (isset($_POST['reset_password'])) {
     $stmt->close();
 }
 
+if (isset($_POST['import_users'])) {
+    if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] == UPLOAD_ERR_OK) {
+        $file = $_FILES['csv_file']['tmp_name'];
+        $handle = fopen($file, "r");
+        $imported = 0;
+        $skipped = 0;
+        $errors = [];
+        
+      
+        $firstRow = fgetcsv($handle, 1000, ",");
+        if ($firstRow && (stripos(implode(",", $firstRow), "username") !== false || 
+                          stripos(implode(",", $firstRow), "name") !== false)) {
+        
+        } else {
+           
+            rewind($handle);
+        }
+        
+        while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+    
+            if (count($data) < 3) {
+                $data = str_getcsv(implode(",", $data), ";");
+            }
+            
+            if (count($data) >= 3) {
+                $username = trim($data[0]);
+                $name = trim($data[1]);
+                $class = trim($data[2]);
+                $password = isset($data[3]) ? trim($data[3]) : '123456'; 
+                
+            
+                if (empty($username) || empty($name) || empty($class)) {
+                    $skipped++;
+                    $errors[] = "Baris skipped: Data tidak lengkap - " . implode(", ", $data);
+                    continue;
+                }
+                
+                $check_stmt = $conn->prepare("SELECT id FROM users WHERE username = ?");
+                $check_stmt->bind_param("s", $username);
+                $check_stmt->execute();
+                $check_stmt->store_result();
+                
+                if ($check_stmt->num_rows > 0) {
+                    $skipped++;
+                    $errors[] = "Username sudah ada: " . $username;
+                    $check_stmt->close();
+                    continue;
+                }
+                $check_stmt->close();
+                
+           
+                $valid_classes = ['XI RPL', 'XI DKV', 'XI TKJ'];
+                if (!in_array($class, $valid_classes)) {
+                    $skipped++;
+                    $errors[] = "Kelas tidak valid: " . $class . " untuk user " . $username;
+                    continue;
+                }
+                if (strlen($password) < 4) {
+                    $skipped++;
+                    $errors[] = "Password terlalu pendek untuk user: " . $username . " (minimal 4 karakter)";
+                    continue;
+                }
+           
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+               
+                $stmt = $conn->prepare("INSERT INTO users (username, name, password, class, role) VALUES (?, ?, ?, ?, 'user')");
+                $stmt->bind_param("ssss", $username, $name, $hashed_password, $class);
+                
+                if ($stmt->execute()) {
+                    $imported++;
+                } else {
+                    $skipped++;
+                    $errors[] = "Error inserting: " . $username . " - " . $stmt->error;
+                }
+                $stmt->close();
+            } else {
+                $skipped++;
+                $errors[] = "Format data tidak valid: " . implode(", ", $data);
+            }
+        }
+        fclose($handle);
+        
+        $import_message = "Imported: $imported users, Skipped: $skipped users";
+        if (!empty($errors)) {
+            $import_message .= "<br><details style='margin-top: 10px;'><summary>Detail Errors:</summary><ul style='color: #dc2626;'>";
+            foreach (array_slice($errors, 0, 10) as $error) { 
+                $import_message .= "<li>" . htmlspecialchars($error) . "</li>";
+            }
+            if (count($errors) > 10) {
+                $import_message .= "<li>... and " . (count($errors) - 10) . " more errors</li>";
+            }
+            $import_message .= "</ul></details>";
+        }
+    } else {
+        $import_error = "Tolong pilih file CSV yang benar";
+    }
+}
+
+
 if (isset($_GET['delete'])) {
     $user_id = intval($_GET['delete']);
     if ($user_id != $_SESSION['user_id']) {
@@ -77,7 +176,7 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
 <html>
 <head>
     <title>Manage Users - Examsis</title>
-         <link rel="stylesheet" href="css/manage_user.css">
+    <link rel="stylesheet" href="css/manage_user.css">
 </head>
 <body>
     <div class="container">
@@ -87,7 +186,31 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
             <a href="dashboard.php" class="back-btn">← Kembali ke dashboard</a>
         </div>
 
-    
+        <?php if (isset($import_message)): ?>
+            <div class="message success"><?php echo $import_message; ?></div>
+        <?php endif; ?>
+        <?php if (isset($import_error)): ?>
+            <div class="message error"><?php echo $import_error; ?></div>
+        <?php endif; ?>
+
+        <div class="section import-section">
+            <h2>Import Users dari CSV</h2>
+            <form method="post" enctype="multipart/form-data" id="csvForm">
+                <div class="form-group">
+                    <label for="csv_file">Pilih file CSV:</label>
+                    <input type="file" id="csv_file" name="csv_file" accept=".csv" required class="file-input" onchange="showFileName()">
+                    <span id="fileName" class="file-name">
+                        <?php 
+                        if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] == UPLOAD_ERR_OK) {
+                            echo htmlspecialchars($_FILES['csv_file']['name']);
+                        } else {
+                            echo "Belum ada file";
+                        }
+                        ?>
+                    </span>
+                </div>
+                <button type="submit" name="import_users" id="importBtn" class="btn btn-primary">Import Users</button>
+            </form>
         <div class="section" id="addForm">
             <h2>Tambah user baru</h2>
             <form method="post">
@@ -153,6 +276,7 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
             <form method="post">
                 <input type="hidden" name="user_id" id="reset_user_id">
                 <div class="form-group">
+                    <label for="new_password">Kata Sandi Baru:</label>
                     <input type="password" id="new_password" name="new_password" required>
                 </div>
                 
@@ -229,6 +353,7 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
             document.getElementById('editForm').classList.remove('hidden-form');
             document.getElementById('addForm').style.display = 'none';
             document.getElementById('resetForm').classList.add('hidden-form');
+            document.getElementById('csvForm').style.display = 'none';
             
             document.getElementById('editForm').scrollIntoView({ behavior: 'smooth' });
         }
@@ -240,6 +365,7 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
             document.getElementById('resetForm').classList.remove('hidden-form');
             document.getElementById('addForm').style.display = 'none';
             document.getElementById('editForm').classList.add('hidden-form');
+            document.getElementById('csvForm').style.display = 'none';
             
             document.getElementById('resetForm').scrollIntoView({ behavior: 'smooth' });
         }
@@ -248,9 +374,23 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
             document.getElementById('editForm').classList.add('hidden-form');
             document.getElementById('resetForm').classList.add('hidden-form');
             document.getElementById('addForm').style.display = 'block';
+            document.getElementById('csvForm').style.display = 'block';
             
             document.getElementById('addForm').scrollIntoView({ behavior: 'smooth' });
         }
+
+        function showFileName() {
+            const input = document.getElementById('csv_file');
+            const fileName = input.files.length > 0 ? input.files[0].name : "Belum ada file";
+            document.getElementById('fileName').innerText = fileName;
+            document.getElementById('importBtn').disabled = (input.files.length === 0);
+        }
+
+      
+        window.onload = function() {
+            document.getElementById('csv_file').value = "";
+            document.getElementById('fileName').innerText = "Belum ada file";
+        };
     </script>
 </body>
 </html>
