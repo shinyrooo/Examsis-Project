@@ -7,38 +7,54 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
     header("Location: login.php");
     exit();
 }
+$classes_query = "SELECT DISTINCT class FROM users WHERE role = 'user' ORDER BY class";
+$classes_result = $conn->query($classes_query);
+$classes = $classes_result->fetch_all(MYSQLI_ASSOC);
+
+
+$exams_query = "SELECT DISTINCT id, exam_name FROM exams ORDER BY exam_name";
+$exams_result = $conn->query($exams_query);
+$exams = $exams_result->fetch_all(MYSQLI_ASSOC);
+
+
+$filter_class = isset($_GET['class']) ? $_GET['class'] : '';
+$filter_exam  = isset($_GET['exam']) ? $_GET['exam'] : '';
 
 $query = "SELECT er.*, u.username, u.name, u.class, e.exam_name 
           FROM exam_results er 
           JOIN users u ON er.user_id = u.id 
           JOIN exams e ON er.exam_id = e.id 
-          ORDER BY u.class, u.username, er.completed_at DESC";
-$result = $conn->query($query);
+          WHERE 1=1";
 
-$classes_query = "SELECT DISTINCT class FROM users WHERE role = 'user' ORDER BY class";
-$classes_result = $conn->query($classes_query);
-$classes = $classes_result->fetch_all(MYSQLI_ASSOC);
+$params = [];
+$types = '';
 
-$filter_class = isset($_GET['class']) ? $_GET['class'] : '';
 if ($filter_class) {
-    $query = "SELECT er.*, u.username, u.name, u.class, e.exam_name 
-              FROM exam_results er 
-              JOIN users u ON er.user_id = u.id 
-              JOIN exams e ON er.exam_id = e.id 
-              WHERE u.class = ?
-              ORDER BY u.username, er.completed_at DESC";
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param("s", $filter_class);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $query .= " AND u.class = ?";
+    $params[] = $filter_class;
+    $types .= 's';
 }
-?>
 
+if ($filter_exam) {
+    $query .= " AND e.id = ?";
+    $params[] = $filter_exam;
+    $types .= 'i';
+}
+
+$query .= " ORDER BY u.class, u.username, er.completed_at DESC";
+
+$stmt = $conn->prepare($query);
+if (!empty($params)) {
+    $stmt->bind_param($types, ...$params);
+}
+$stmt->execute();
+$result = $stmt->get_result();
+?>
 <!DOCTYPE html>
 <html>
 <head>
     <title>Hasil ujian Untuk Admin</title>
-     <link rel="stylesheet" href="css/admin_results.css">
+    <link rel="stylesheet" href="css/admin_results.css">
 </head>
 <body>
     <div class="container">
@@ -54,17 +70,48 @@ if ($filter_class) {
                     <option value="">Semua kelas</option>
                     <?php foreach ($classes as $class): ?>
                         <option value="<?php echo $class['class']; ?>" <?php echo ($filter_class == $class['class']) ? 'selected' : ''; ?>>
-                            <?php echo $class['class']; ?>
+                            <?php echo htmlspecialchars($class['class']); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
+                <input type="hidden" name="exam" value="<?php echo $filter_exam; ?>">
                 <input type="submit" value="Terapkan">
             </form>
         </div>
-        
+
+        <div class="filter-section">
+            <h3>Pilih berdasarkan ujian</h3>
+            <form method="get" class="filter-form">
+                <select name="exam">
+                    <option value="">Semua ujian</option>
+                    <?php foreach ($exams as $exam): ?>
+                        <option value="<?php echo $exam['id']; ?>" <?php echo ($filter_exam == $exam['id']) ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($exam['exam_name']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <input type="hidden" name="class" value="<?php echo $filter_class; ?>">
+                <input type="submit" value="Terapkan">
+            </form>
+        </div>
+
         <div class="results-section">
             <?php if ($result->num_rows > 0): ?>
-                <h3>Hasil ulangan <?php echo $filter_class ? "untuk kelas $filter_class" : "untuk semua kelas"; ?></h3>
+                <h3>
+                    Hasil ulangan 
+                    <?php 
+                        if ($filter_class) echo "kelas $filter_class "; 
+                        if ($filter_exam) {
+                            foreach ($exams as $exam) {
+                                if ($exam['id'] == $filter_exam) {
+                                    echo "- ujian " . htmlspecialchars($exam['exam_name']);
+                                    break;
+                                }
+                            }
+                        }
+                        if (!$filter_class && !$filter_exam) echo "untuk semua kelas dan semua ujian";
+                    ?>
+                </h3>
                 
                 <table>
                     <thead>
@@ -112,7 +159,7 @@ if ($filter_class) {
                 </table>
             <?php else: ?>
                 <div class="no-results">
-                    <P>Tidak ada ujian yang ditemukan.</P>
+                    <p>Tidak ada ujian yang ditemukan.</p>
                 </div>
             <?php endif; ?>
         </div>
