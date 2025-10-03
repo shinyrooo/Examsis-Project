@@ -51,11 +51,38 @@ if ($total_questions == 0) {
     exit();
 }
 
+
 if (!isset($_SESSION['exam_start_time']) || $_SESSION['exam_id'] != $exam_id) {
     $_SESSION['exam_start_time'] = time();
     $_SESSION['exam_duration'] = $exam_duration;
     $_SESSION['exam_id'] = $exam_id;
     $_SESSION['user_answers'] = array_fill(1, $total_questions, '');
+    
+    
+    $question_order = range(1, $total_questions);
+    shuffle($question_order);
+    $_SESSION['question_order'] = $question_order;
+    
+    $_SESSION['question_mapping'] = array();
+    foreach ($question_order as $display_num => $actual_question_num) {
+        $_SESSION['question_mapping'][$display_num + 1] = $actual_question_num;
+    }
+}
+
+
+function getActualQuestionNumber($display_number) {
+    return $_SESSION['question_mapping'][$display_number];
+}
+
+
+function getDisplayQuestionNumber($actual_number) {
+    $mapping = $_SESSION['question_mapping'];
+    foreach ($mapping as $display_num => $actual_num) {
+        if ($actual_num == $actual_number) {
+            return $display_num;
+        }
+    }
+    return 1;
 }
 
 $time_elapsed = time() - $_SESSION['exam_start_time'];
@@ -65,8 +92,9 @@ if ($time_left <= 0) {
     $score = 0;
     
     foreach ($questions as $index => $question) {
-        $question_num = $index + 1;
-        $user_answer = $_SESSION['user_answers'][$question_num];
+        $actual_question_num = $index + 1;
+        $display_question_num = getDisplayQuestionNumber($actual_question_num);
+        $user_answer = $_SESSION['user_answers'][$display_question_num];
         
         if (!empty($user_answer)) {
             $is_correct = ($user_answer == $question['correct_answer']);
@@ -88,6 +116,8 @@ if ($time_left <= 0) {
     unset($_SESSION['exam_duration']);
     unset($_SESSION['exam_id']);
     unset($_SESSION['user_answers']);
+    unset($_SESSION['question_order']);
+    unset($_SESSION['question_mapping']);
     
     echo "<h2>Waktu sudah habis!</h2>";
     echo "<p>Nilai kamu: $score/$total_questions</p>";
@@ -102,13 +132,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['user_answers'][$current_question] = $_POST['answer'];
     }
 
-    // Prioritas utama submit
     if (isset($_POST['submit_exam'])) {
         $score = 0;
 
         foreach ($questions as $index => $question) {
-            $question_num = $index + 1;
-            $user_answer = $_SESSION['user_answers'][$question_num];
+            $actual_question_num = $index + 1;
+            $display_question_num = getDisplayQuestionNumber($actual_question_num);
+            $user_answer = $_SESSION['user_answers'][$display_question_num];
 
             if (!empty($user_answer)) {
                 $is_correct = ($user_answer == $question['correct_answer']);
@@ -132,6 +162,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         unset($_SESSION['exam_duration']);
         unset($_SESSION['exam_id']);
         unset($_SESSION['user_answers']);
+        unset($_SESSION['question_order']);
+        unset($_SESSION['question_mapping']);
 
         header("Location: results.php");
         exit();
@@ -146,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: take_exam.php?exam_id=$exam_id&q=$current_question");
         exit();
 
-    } elseif (!empty($_POST['goto_question'])) { // penting: pakai !empty
+    } elseif (!empty($_POST['goto_question'])) {
         $goto_question = intval($_POST['goto_question']);
         if ($goto_question >= 1 && $goto_question <= $total_questions) {
             header("Location: take_exam.php?exam_id=$exam_id&q=$goto_question");
@@ -159,7 +191,8 @@ if (isset($_GET['q'])) {
     $current_question = max(1, min($total_questions, intval($_GET['q'])));
 }
 
-$current_question_data = $questions[$current_question - 1];
+$actual_question_num = getActualQuestionNumber($current_question);
+$current_question_data = $questions[$actual_question_num - 1];
 $user_answer = $_SESSION['user_answers'][$current_question];
 ?>
 
@@ -211,7 +244,6 @@ $user_answer = $_SESSION['user_answers'][$current_question];
         function confirmSubmit() {
             var unanswered = 0;
             for (var i = 1; i <= <?php echo $total_questions; ?>; i++) {
-               
             }
             
             return confirm('Yakin ingin mengirimkan ujian? Setelah dikirim, Anda tidak dapat mengubah jawaban.');

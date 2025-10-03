@@ -171,7 +171,7 @@
             background: #f7fafc;
         }
         
-        /* ACTION BUTTONS */
+      
         .action-buttons {
             display: flex;
             gap: 10px;
@@ -204,7 +204,7 @@
             background: #b91c1c;
         }
         
-        /* NO EXAMS MESSAGE */
+      
         .no-exams {
             background: #f8fafc;
             padding: 40px;
@@ -214,7 +214,7 @@
             color: #64748b;
         }
         
-        /* RESPONSIVE */
+     
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
