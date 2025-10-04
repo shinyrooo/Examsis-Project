@@ -41,6 +41,8 @@ if (isset($_POST['edit_user'])) {
     $stmt->close();
 }
 
+//kalo error aku gulung bumi
+
 if (isset($_POST['reset_password'])) {
     $user_id = intval($_POST['user_id']);
     $new_password = password_hash($_POST['new_password'], PASSWORD_DEFAULT);
@@ -56,6 +58,7 @@ if (isset($_POST['reset_password'])) {
     $stmt->close();
 }
 
+//udah cukup, jangan disentuh nanti error
 if (isset($_POST['import_users'])) {
     if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] == UPLOAD_ERR_OK) {
         $file = $_FILES['csv_file']['tmp_name'];
@@ -64,18 +67,14 @@ if (isset($_POST['import_users'])) {
         $skipped = 0;
         $errors = [];
         
-      
         $firstRow = fgetcsv($handle, 1000, ",");
         if ($firstRow && (stripos(implode(",", $firstRow), "username") !== false || 
                           stripos(implode(",", $firstRow), "name") !== false)) {
-        
         } else {
-           
             rewind($handle);
         }
         
         while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
-    
             if (count($data) < 3) {
                 $data = str_getcsv(implode(",", $data), ";");
             }
@@ -86,7 +85,6 @@ if (isset($_POST['import_users'])) {
                 $class = trim($data[2]);
                 $password = isset($data[3]) ? trim($data[3]) : '123456'; 
                 
-            
                 if (empty($username) || empty($name) || empty($class)) {
                     $skipped++;
                     $errors[] = "Baris skipped: Data tidak lengkap - " . implode(", ", $data);
@@ -106,7 +104,6 @@ if (isset($_POST['import_users'])) {
                 }
                 $check_stmt->close();
                 
-           
                 $valid_classes = ['XI RPL', 'XI DKV', 'XI TKJ'];
                 if (!in_array($class, $valid_classes)) {
                     $skipped++;
@@ -154,7 +151,6 @@ if (isset($_POST['import_users'])) {
     }
 }
 
-
 if (isset($_GET['delete'])) {
     $user_id = intval($_GET['delete']);
     if ($user_id != $_SESSION['user_id']) {
@@ -173,46 +169,42 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>Manage Users - Examsis</title>
-    <link rel="stylesheet" href="css/manage_user.css">
+    <title>Kelola User - Examsis</title>
+     <link rel="stylesheet" href="css/manage_user.css">
 </head>
 <body>
-    <div class="container">
-       
+    
         <div class="header">
-            <h1>Manage Users</h1>
-            <a href="dashboard.php" class="back-btn">← Kembali ke dashboard</a>
+            <h1>Kelola User</h1>
+            <a href="dashboard.php" class="back-btn">← Kembali ke Dashboard</a>
         </div>
-
+        
         <?php if (isset($import_message)): ?>
             <div class="message success"><?php echo $import_message; ?></div>
         <?php endif; ?>
+        
         <?php if (isset($import_error)): ?>
             <div class="message error"><?php echo $import_error; ?></div>
         <?php endif; ?>
-
-        <div class="section import-section">
+     
+        <!-- beda sama halaman sebalah, padahal sama-->
+        <div class="import">
             <h2>Import Users dari CSV</h2>
             <form method="post" enctype="multipart/form-data" id="csvForm">
                 <div class="form-group">
                     <label for="csv_file">Pilih file CSV:</label>
-                    <input type="file" id="csv_file" name="csv_file" accept=".csv" required class="file-input" onchange="showFileName()">
-                    <span id="fileName" class="file-name">
-                        <?php 
-                        if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] == UPLOAD_ERR_OK) {
-                            echo htmlspecialchars($_FILES['csv_file']['name']);
-                        } else {
-                            echo "Belum ada file";
-                        }
-                        ?>
-                    </span>
+                    <input type="file" id="csv_file" name="csv_file" accept=".csv" required 
+                           class="file-input" onchange="showFileName()">
+                    <span id="fileName" class="file-name">Belum ada file</span>
                 </div>
                 <button type="submit" name="import_users" id="importBtn" class="btn btn-primary">Import Users</button>
             </form>
+        </div>
+        
         <div class="section" id="addForm">
-            <h2>Tambah user baru</h2>
+            <h2>Tambah User Baru</h2>
             <form method="post">
                 <div class="form-group">
                     <label for="username">Username:</label>
@@ -225,12 +217,12 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
                 </div>
                 
                 <div class="form-group">
-                    <label for="password">Kata sandi:</label>
+                    <label for="password">Kata Sandi:</label>
                     <input type="password" id="password" name="password" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="class">Class:</label>
+                    <label for="class">Kelas:</label>
                     <select id="class" name="class" required>
                         <option value="XI RPL">XI RPL</option>
                         <option value="XI DKV">XI DKV</option>
@@ -238,12 +230,13 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
                     </select>
                 </div>
                 
-                <button type="submit" name="add_user" class="btn btn-primary">Tambahkan</button>
+                <button type="submit" name="add_user" class="btn btn-primary">Tambahkan User</button>
             </form>
         </div>
         
+        
         <div class="section hidden-form" id="editForm">
-            <h2>Edit user</h2>
+            <h2>Edit User</h2>
             <form method="post">
                 <input type="hidden" name="user_id" id="edit_user_id">
                 
@@ -258,7 +251,7 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
                 </div>
                 
                 <div class="form-group">
-                    <label for="edit_class">Class:</label>
+                    <label for="edit_class">Kelas:</label>
                     <select id="edit_class" name="class" required>
                         <option value="XI RPL">XI RPL</option>
                         <option value="XI DKV">XI DKV</option>
@@ -266,28 +259,29 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
                     </select>
                 </div>
                 
-                <button type="submit" name="edit_user" class="btn btn-primary">Perbarui</button>
+                <button type="submit" name="edit_user" class="btn btn-primary">Perbarui User</button>
                 <button type="button" onclick="showAddForm()" class="btn btn-secondary">Batalkan</button>
             </form>
         </div>
-    
+        
         <div class="section hidden-form" id="resetForm">
-            <h2>Ubah kata sandi <span id="reset_user_name"></span></h2>
+            <h2>Ubah Kata Sandi <span id="reset_user_name"></span></h2>
             <form method="post">
                 <input type="hidden" name="user_id" id="reset_user_id">
+                
                 <div class="form-group">
                     <label for="new_password">Kata Sandi Baru:</label>
                     <input type="password" id="new_password" name="new_password" required>
                 </div>
                 
-                <button type="submit" name="reset_password" class="btn btn-primary">Ubah</button>
+                <button type="submit" name="reset_password" class="btn btn-primary">Ubah Kata Sandi</button>
                 <button type="button" onclick="showAddForm()" class="btn btn-secondary">Batalkan</button>
             </form>
         </div>
-
-        <div class="section">
-            <h2>User List (<?php echo $users->num_rows; ?> users)</h2>
         
+        <div class="section">
+            <h2>Daftar User (<?php echo $users->num_rows; ?> users)</h2>
+            
             <?php if ($users->num_rows > 0): ?>
                 <table class="users-table">
                     <thead>
@@ -306,7 +300,9 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
                             <td><?php echo $no++; ?></td>
                             <td><strong><?php echo htmlspecialchars($user['username']); ?></strong></td>
                             <td><?php echo htmlspecialchars($user['name']); ?></td>
-                            <td><span class="class-badge"><?php echo htmlspecialchars($user['class']); ?></span></td>
+                            <td>
+                                <span class="class-badge"><?php echo htmlspecialchars($user['class']); ?></span>
+                            </td>
                             <td>
                                 <span class="role-badge <?php echo $user['role'] == 'admin' ? 'role-admin' : 'role-user'; ?>">
                                     <?php echo ucfirst($user['role']); ?>
@@ -315,22 +311,22 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
                             <td>
                                 <?php if ($user['id'] != $_SESSION['user_id']): ?>
                                     <div class="action-buttons">
-                                        <button onclick="showEditForm(<?php echo $user['id']; ?>, '<?php echo $user['username']; ?>', '<?php echo $user['name']; ?>', '<?php echo $user['class']; ?>')" 
+                                        <button onclick="showEditForm(<?php echo $user['id']; ?>, '<?php echo addslashes($user['username']); ?>', '<?php echo addslashes($user['name']); ?>', '<?php echo $user['class']; ?>')" 
                                                 class="action-btn btn-edit">
                                             Edit
                                         </button>
-                                        <button onclick="showResetForm(<?php echo $user['id']; ?>, '<?php echo $user['name']; ?>')" 
+                                        <button onclick="showResetForm(<?php echo $user['id']; ?>, '<?php echo addslashes($user['name']); ?>')" 
                                                 class="action-btn btn-reset">
-                                            Ubah Kata Sandi
+                                            Reset Password
                                         </button>
                                         <a href="?delete=<?php echo $user['id']; ?>" 
                                            class="action-btn btn-delete"
-                                           onclick="return confirm('Delete this user?')">
+                                           onclick="return confirm('Hapus user ini?')">
                                             Hapus
                                         </a>
                                     </div>
                                 <?php else: ?>
-                                    <span style="color: #6b7280; font-style: italic;">(Current User)</span>
+                                    <span style="color: #6b7280; font-style: italic;">(User Saat Ini)</span>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -338,7 +334,7 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
                     </tbody>
                 </table>
             <?php else: ?>
-                <p>pengguna tidak ditemukan.</p>
+                <p>Tidak ada user ditemukan.</p>
             <?php endif; ?>
         </div>
     </div>
@@ -378,15 +374,13 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
             
             document.getElementById('addForm').scrollIntoView({ behavior: 'smooth' });
         }
-
+        
         function showFileName() {
             const input = document.getElementById('csv_file');
             const fileName = input.files.length > 0 ? input.files[0].name : "Belum ada file";
             document.getElementById('fileName').innerText = fileName;
-            document.getElementById('importBtn').disabled = (input.files.length === 0);
         }
-
-      
+        
         window.onload = function() {
             document.getElementById('csv_file').value = "";
             document.getElementById('fileName').innerText = "Belum ada file";

@@ -78,7 +78,7 @@ $stmt->close();
                     <?php foreach ($answers as $index => $answer): ?>
                     <tr>
                         <td>
-                            <div class="question-text">Q<?php echo $index + 1; ?>: <?php echo htmlspecialchars($answer['question_text']); ?></div>
+                            <div class="question-text"><?php echo htmlspecialchars($answer['question_text']); ?></div>
                         </td>
                         <td>
                             <ul class="options-list">
@@ -97,8 +97,9 @@ $stmt->close();
                         </td>
                         <td>
                             <span class="result-status <?php echo $answer['is_correct'] ? 'correct' : 'incorrect'; ?>">
-                                <?php echo $answer['is_correct'] ? 'Correct' : 'Incorrect'; ?>
+                            <?php echo $answer['is_correct'] ? 'Benar' : 'Salah'; ?>
                             </span>
+
                         </td>
                     </tr>
                     <?php endforeach; ?>

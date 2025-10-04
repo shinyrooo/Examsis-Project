@@ -214,38 +214,3 @@
             color: #64748b;
         }
         
-     
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-            }
-            
-            .exams-table {
-                display: block;
-                overflow-x: auto;
-            }
-            
-            .action-buttons {
-                flex-direction: column;
-                gap: 5px;
-            }
-            
-            .form-group input,
-            .form-group select {
-                max-width: 100%;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            body {
-                padding: 15px;
-            }
-            
-            .exams-table th,
-            .exams-table td {
-                padding: 10px;
-                font-size: 13px;
-            }
-        }

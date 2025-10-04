@@ -17,6 +17,7 @@ if (!$exam) {
     exit();
 }
 
+// jadi gini..
 if (isset($_POST['import_csv'])) {
     if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] == UPLOAD_ERR_OK) {
         $file = $_FILES['csv_file']['tmp_name'];
@@ -78,6 +79,7 @@ if (isset($_POST['import_csv'])) {
         $import_error = "Tolong pilih file CSV yang benar";
     }
 }
+
 
 if (isset($_POST['add_question'])) {
     $stmt = $conn->prepare("SELECT COALESCE(MAX(number), 0) + 1 as next_number FROM questions WHERE exam_id = ?");
@@ -206,26 +208,21 @@ $stmt->close();
         <?php if (isset($import_error)): ?>
             <div class="message error"><?php echo $import_error; ?></div>
         <?php endif; ?>
-        <div class="section import-section">
-            <h2>Import soal dari CSV</h2>
-            <form method="post" enctype="multipart/form-data" id="csvForm">
-                <div class="form-group">
-                    <label for="csv_file">Pilih file CSV:</label>
-                    <input type="file" id="csv_file" name="csv_file" accept=".csv" required class="file-input" onchange="showFileName()">
-                    <span id="fileName" class="file-name">
-                        <?php 
-                        if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] == UPLOAD_ERR_OK) {
-                            echo htmlspecialchars($_FILES['csv_file']['name']);
-                        } else {
-                            echo "Belum ada file";
-                        }
-                        ?>
-                    </span>
-                </div>
-                <button type="submit" name="import_csv" id="importBtn" class="btn btn-primary">Import</button>
-            </form>
+<!-- idk man,tampilannya masih berantakan -->
+<div class="section import-section">
+    <h2>Import soal dari CSV</h2>
+    <form method="post" enctype="multipart/form-data" id="csvForm">
+        <div class="form-group">
+            <label for="csv_file">Pilih file CSV:</label>
+            <input type="file" id="csv_file" name="csv_file" accept=".csv" required 
+                   class="file-input" onchange="showFileName()">
+            <span id="fileName" class="file-name">Belum ada file</span>
         </div>
-        <div class="section" id="questionForm">
+        <button type="submit" name="import_csv" id="importBtn" class="btn btn-primary">Import</button>
+    </form>
+</div>
+
+<div class="section" id="questionForm">
             <h2 id="formTitle">Tambah soal baru</h2>
             <form method="post">
                 <input type="hidden" name="question_id" id="question_id">
@@ -266,7 +263,7 @@ $stmt->close();
                 <button type="submit" id="submitBtn" name="add_question" class="btn btn-primary">Tambahkan Soal</button>
                 <button type="button" id="cancelBtn" onclick="resetForm()" class="btn btn-secondary" style="display:none;">Batalkan</button>
             </form>
-        </div>
+</div>
         <div class="section">
             <h2>soal yang tersedia (<?php echo count($questions); ?>)</h2>
             <?php if (count($questions) > 0): ?>
