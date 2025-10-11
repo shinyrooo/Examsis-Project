@@ -46,12 +46,13 @@
             height: calc(100vh - 16.67vh - 100px);
         }
         
-      
+
         .question-column {
             width: 40%;
             padding: 20px;
             border-right: 1px solid #ddd;
             overflow-y: auto;
+
         }
         
         .question-box {
@@ -76,6 +77,7 @@
         .options-column {
             width: 60%;
             padding: 20px;
+             overflow-y: auto;
         }
         
         .option-item {

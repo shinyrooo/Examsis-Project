@@ -75,6 +75,12 @@ $exams = $conn->query("SELECT * FROM exams ORDER BY class, exam_name");
                         <option value="XI RPL">XI RPL</option>
                         <option value="XI DKV">XI DKV</option>
                         <option value="XI TKJ">XI TKJ</option>
+                        <option value="XI PSPT">XI PSPT</option>
+                        <option value="XI MP">XI MP</option>
+                        <option value="XI BD">XI BD</option>
+                        <option value="XI AK">XI AK</option>
+                        <option value="XI ANM">XI ANM</option>
+                        <option value="XI ULW">XI ULW</option>
                     </select>
                 </div>
                 

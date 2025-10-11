@@ -17,7 +17,6 @@ if (!$exam) {
     exit();
 }
 
-// jadi gini..
 if (isset($_POST['import_csv'])) {
     if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] == UPLOAD_ERR_OK) {
         $file = $_FILES['csv_file']['tmp_name'];
@@ -208,7 +207,6 @@ $stmt->close();
         <?php if (isset($import_error)): ?>
             <div class="message error"><?php echo $import_error; ?></div>
         <?php endif; ?>
-<!-- idk man,tampilannya masih berantakan -->
 <div class="section import-section">
     <h2>Import soal dari CSV</h2>
     <form method="post" enctype="multipart/form-data" id="csvForm">

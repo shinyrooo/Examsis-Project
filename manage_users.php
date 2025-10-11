@@ -41,7 +41,7 @@ if (isset($_POST['edit_user'])) {
     $stmt->close();
 }
 
-//kalo error aku gulung bumi
+
 
 if (isset($_POST['reset_password'])) {
     $user_id = intval($_POST['user_id']);
@@ -58,7 +58,6 @@ if (isset($_POST['reset_password'])) {
     $stmt->close();
 }
 
-//udah cukup, jangan disentuh nanti error
 if (isset($_POST['import_users'])) {
     if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] == UPLOAD_ERR_OK) {
         $file = $_FILES['csv_file']['tmp_name'];
@@ -104,7 +103,7 @@ if (isset($_POST['import_users'])) {
                 }
                 $check_stmt->close();
                 
-                $valid_classes = ['XI RPL', 'XI DKV', 'XI TKJ'];
+                $valid_classes = ['XI RPL', 'XI DKV', 'XI TKJ','XI PSPT','XI MP', 'XI BD', 'XI AK', 'XI ULW', 'XI ANM'];
                 if (!in_array($class, $valid_classes)) {
                     $skipped++;
                     $errors[] = "Kelas tidak valid: " . $class . " untuk user " . $username;
@@ -189,7 +188,7 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
             <div class="message error"><?php echo $import_error; ?></div>
         <?php endif; ?>
      
-        <!-- beda sama halaman sebalah, padahal sama-->
+    
         <div class="import">
             <h2>Import Users dari CSV</h2>
             <form method="post" enctype="multipart/form-data" id="csvForm">
@@ -227,6 +226,12 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
                         <option value="XI RPL">XI RPL</option>
                         <option value="XI DKV">XI DKV</option>
                         <option value="XI TKJ">XI TKJ</option>
+                        <option value="XI PSPT">XI PSPT</option>
+                        <option value="XI MP">XI MP</option>
+                        <option value="XI BD">XI BD</option>
+                        <option value="XI AK">XI AK</option>
+                        <option value="XI ANM">XI ANM</option>
+                        <option value="XI ULW">XI ULW</option>
                     </select>
                 </div>
                 
@@ -256,6 +261,12 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
                         <option value="XI RPL">XI RPL</option>
                         <option value="XI DKV">XI DKV</option>
                         <option value="XI TKJ">XI TKJ</option>
+                        <option value="XI PSPT">XI PSPT</option>
+                        <option value="XI MP">XI MP</option>
+                        <option value="XI BD">XI BD</option>
+                        <option value="XI AK">XI AK</option>
+                        <option value="XI ANM">XI ANM</option>
+                        <option value="XI ULW">XI ULW</option>
                     </select>
                 </div>
                 
