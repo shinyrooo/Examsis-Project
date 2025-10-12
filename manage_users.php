@@ -6,6 +6,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
 }
 $no = 1;
 
+// Ambil parameter filter
+$filter_class = isset($_GET['filter_class']) ? $_GET['filter_class'] : '';
+
 if (isset($_POST['add_user'])) {
     $username = sanitize_input($_POST['username']);
     $name = sanitize_input($_POST['name']);
@@ -40,8 +43,6 @@ if (isset($_POST['edit_user'])) {
     }
     $stmt->close();
 }
-
-
 
 if (isset($_POST['reset_password'])) {
     $user_id = intval($_POST['user_id']);
@@ -164,7 +165,19 @@ if (isset($_GET['delete'])) {
     }
 }
 
-$users = $conn->query("SELECT * FROM users ORDER BY class, name");
+
+$users_query = "SELECT * FROM users WHERE 1=1";
+if ($filter_class) {
+    $users_query .= " AND class = '" . $conn->real_escape_string($filter_class) . "'";
+}
+$users_query .= " ORDER BY class, name";
+
+$users = $conn->query($users_query);
+
+
+$classes_query = "SELECT DISTINCT class FROM users WHERE class IS NOT NULL AND class != '' ORDER BY class";
+$classes_result = $conn->query($classes_query);
+$classes = $classes_result->fetch_all(MYSQLI_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -293,6 +306,25 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
         <div class="section">
             <h2>Daftar User (<?php echo $users->num_rows; ?> users)</h2>
             
+      <div class="filter-section">
+    <h3>pilih berdasarkan kelas</h3>
+    <form method="get" class="filter-form">
+        <label for="filter_class">Pilih Kelas:</label>
+        <select name="filter_class" id="filter_class">
+            <option value="">Semua Kelas</option>
+            <?php foreach ($classes as $class): ?>
+                <option value="<?php echo $class['class']; ?>" 
+                    <?php echo ($filter_class == $class['class']) ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($class['class']); ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+
+        <input type="submit" value="Terapkan Filter">
+    </form>
+</div>
+
+            
             <?php if ($users->num_rows > 0): ?>
                 <table class="users-table">
                     <thead>
@@ -330,7 +362,7 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
                                                 class="action-btn btn-reset">
                                             Reset Password
                                         </button>
-                                        <a href="?delete=<?php echo $user['id']; ?>" 
+                                        <a href="?delete=<?php echo $user['id']; ?><?php echo $filter_class ? '&filter_class=' . urlencode($filter_class) : ''; ?>" 
                                            class="action-btn btn-delete"
                                            onclick="return confirm('Hapus user ini?')">
                                             Hapus
@@ -345,7 +377,7 @@ $users = $conn->query("SELECT * FROM users ORDER BY class, name");
                     </tbody>
                 </table>
             <?php else: ?>
-                <p>Tidak ada user ditemukan.</p>
+                <p>Tidak ada user ditemukan<?php echo $filter_class ? " untuk kelas $filter_class" : ""; ?>.</p>
             <?php endif; ?>
         </div>
     </div>
