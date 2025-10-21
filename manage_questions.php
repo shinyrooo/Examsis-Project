@@ -1,4 +1,8 @@
 <?php 
+// error_reporting(E_ALL);
+// ini_set('display_errors', 1);
+// ini_set('display_startup_errors', 1);
+
 include 'config.php';
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
     header("Location: login.php");
@@ -178,6 +182,8 @@ $stmt->execute();
 $questions = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="en">

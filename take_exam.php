@@ -1,4 +1,7 @@
 <?php 
+// error_reporting(E_ALL);
+// ini_set('display_errors', 1);
+// ini_set('display_startup_errors', 1);
 include 'config.php';
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'user') {
@@ -38,6 +41,14 @@ if ($result->num_rows > 0) {
 }
 $stmt->close();
 
+$user_stmt = $conn->prepare("SELECT name FROM users WHERE id = ?");
+$user_stmt->bind_param("i", $_SESSION['user_id']);
+$user_stmt->execute();
+$user_result = $user_stmt->get_result();
+$user_data = $user_result->fetch_assoc();
+$user_name = $user_data['name'];
+$user_stmt->close();
+
 $stmt = $conn->prepare("SELECT * FROM questions WHERE exam_id = ? ORDER BY number");
 $stmt->bind_param("i", $exam_id);
 $stmt->execute();
@@ -51,13 +62,11 @@ if ($total_questions == 0) {
     exit();
 }
 
-
 if (!isset($_SESSION['exam_start_time']) || $_SESSION['exam_id'] != $exam_id) {
     $_SESSION['exam_start_time'] = time();
     $_SESSION['exam_duration'] = $exam_duration;
     $_SESSION['exam_id'] = $exam_id;
     $_SESSION['user_answers'] = array_fill(1, $total_questions, '');
-    
     
     $question_order = range(1, $total_questions);
     shuffle($question_order);
@@ -69,11 +78,9 @@ if (!isset($_SESSION['exam_start_time']) || $_SESSION['exam_id'] != $exam_id) {
     }
 }
 
-
 function getActualQuestionNumber($display_number) {
     return $_SESSION['question_mapping'][$display_number];
 }
-
 
 function getDisplayQuestionNumber($actual_number) {
     $mapping = $_SESSION['question_mapping'];
@@ -106,9 +113,9 @@ if ($time_left <= 0) {
             $stmt->close();
         }
     }
-    
-    $stmt = $conn->prepare("INSERT INTO exam_results (user_id, exam_id, score, total_questions) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("iiii", $_SESSION['user_id'], $exam_id, $score, $total_questions);
+
+    $stmt = $conn->prepare("INSERT INTO exam_results (user_id, user_name, exam_id, score, total_questions) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param("isiii", $_SESSION['user_id'], $user_name, $exam_id, $score, $total_questions);
     $stmt->execute();
     $stmt->close();
     
@@ -152,9 +159,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        $stmt = $conn->prepare("INSERT INTO exam_results (user_id, exam_id, score, total_questions) 
-                                VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("iiii", $_SESSION['user_id'], $exam_id, $score, $total_questions);
+        $stmt = $conn->prepare("INSERT INTO exam_results (user_id, user_name, exam_id, score, total_questions) 
+                                VALUES (?, ?, ?, ?, ?)");
+        $stmt->bind_param("isiii", $_SESSION['user_id'], $user_name, $exam_id, $score, $total_questions);
         $stmt->execute();
         $stmt->close();
 

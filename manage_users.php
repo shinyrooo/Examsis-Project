@@ -6,7 +6,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
 }
 $no = 1;
 
-// Ambil parameter filter
+
 $filter_class = isset($_GET['filter_class']) ? $_GET['filter_class'] : '';
 
 if (isset($_POST['add_user'])) {
